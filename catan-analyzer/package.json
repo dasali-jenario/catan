@@ -1,0 +1,25 @@
+{
+  "name": "catan-analyzer",
+  "version": "1.0.0",
+  "description": "A web application to analyze Settlers of Catan board and calculate building probabilities.",
+  "main": "src/assets/js/app.js",
+  "scripts": {
+    "start": "live-server src",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4",
+    "live-server": "^1.2.1"
+  },
+  "keywords": [
+    "catan",
+    "board game",
+    "probability",
+    "analysis"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
