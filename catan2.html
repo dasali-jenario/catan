@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Catan Strategy Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
+        .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .hex { border: 1px solid #999; padding: 10px; text-align: center; }
+        .results { margin-top: 20px; padding: 15px; background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h2>Resource Probability Calculator</h2>
+        <div class="resource-grid" id="hexGrid"></div>
+        <button onclick="calculateProbabilities()">Calculate Probabilities</button>
+        <div class="results" id="probResults"></div>
+    </div>
+
+    <div class="section">
+        <h2>Victory Point Calculator</h2>
+        <label>Settlements: <input type="number" id="settlements" value="0" min="0"></label>
+        <label>Cities: <input type="number" id="cities" value="0" min="0"></label>
+        <label>Longest Road: <input type="checkbox" id="longestRoad"></label>
+        <label>Largest Army: <input type="checkbox" id="largestArmy"></label>
+        <button onclick="calculateVictoryPoints()">Calculate Points</button>
+        <div class="results" id="vpResults"></div>
+    </div>
+
+    <script>
+        // Hex data - numbers and their probabilities
+        const hexNumbers = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12];
+        const numberProbabilities = {
+            2: 1, 3: 2, 4: 3, 5: 4, 6: 5,
+            8: 5, 9: 4, 10: 3, 11: 2, 12: 1
+        };
+
+        // Initialize hex grid
+        function initHexGrid() {
+            const grid = document.getElementById('hexGrid');
+            hexNumbers.forEach((number, index) => {
+                const hex = document.createElement('div');
+                hex.className = 'hex';
+                hex.innerHTML = `
+                    <select class="resourceType">
+                        <option value="brick">Brick</option>
+                        <option value="lumber">Lumber</option>
+                        <option value="wool">Wool</option>
+                        <option value="grain">Grain</option>
+                        <option value="ore">Ore</option>
+                    </select>
+                    <div>Number: ${number} (${numberProbabilities[number]}%)</div>
+                `;
+                grid.appendChild(hex);
+            });
+        }
+
+        // Calculate resource probabilities
+        function calculateProbabilities() {
+            const hexes = document.getElementsByClassName('hex');
+            const resourceTotals = { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 };
+            
+            Array.from(hexes).forEach(hex => {
+                const resource = hex.querySelector('.resourceType').value;
+                const number = parseInt(hex.textContent.match(/\d+/)[0]);
+                resourceTotals[resource] += numberProbabilities[number];
+            });
+
+            const results = Object.entries(resourceTotals)
+                .sort((a, b) => b[1] - a[1])
+                .map(([resource, prob]) => `${resource}: ${prob}%`);
+
+            document.getElementById('probResults').innerHTML = results.join('<br>');
+        }
+
+        // Calculate victory points
+        function calculateVictoryPoints() {
+            const settlements = parseInt(document.getElementById('settlements').value) || 0;
+            const cities = parseInt(document.getElementById('cities').value) || 0;
+            const longestRoad = document.getElementById('longestRoad').checked;
+            const largestArmy = document.getElementById('largestArmy').checked;
+
+            const points = (settlements * 1) + (cities * 2) +
+                         (longestRoad ? 2 : 0) + (largestArmy ? 2 : 0);
+
+            document.getElementById('vpResults').innerHTML = `
+                Total Victory Points: ${points}<br>
+                Breakdown:<br>
+                - Settlements: ${settlements}<br>
+                - Cities: ${cities * 2}<br>
+                - Longest Road: ${longestRoad ? 2 : 0}<br>
+                - Largest Army: ${largestArmy ? 2 : 0}
+            `;
+        }
+
+        // Initialize when page loads
+        initHexGrid();
+    </script>
+</body>
+</html>
