@@ -5,15 +5,17 @@
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
-        .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .hex { border: 1px solid #999; padding: 10px; text-align: center; }
+        .hex-grid { display: flex; flex-direction: column; align-items: center; }
+        .hex-row { display: flex; }
+        .hex { width: 100px; height: 115px; background-color: #f0f0f0; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); margin: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hex select { margin-bottom: 5px; }
         .results { margin-top: 20px; padding: 15px; background-color: #f0f0f0; }
     </style>
 </head>
 <body>
     <div class="section">
         <h2>Resource Probability Calculator</h2>
-        <div class="resource-grid" id="hexGrid"></div>
+        <div class="hex-grid" id="hexGrid"></div>
         <button onclick="calculateProbabilities()">Calculate Probabilities</button>
         <div class="results" id="probResults"></div>
     </div>
@@ -39,20 +41,40 @@
         // Initialize hex grid
         function initHexGrid() {
             const grid = document.getElementById('hexGrid');
-            hexNumbers.forEach((number, index) => {
-                const hex = document.createElement('div');
-                hex.className = 'hex';
-                hex.innerHTML = `
-                    <select class="resourceType">
-                        <option value="brick">Brick</option>
-                        <option value="lumber">Lumber</option>
-                        <option value="wool">Wool</option>
-                        <option value="grain">Grain</option>
-                        <option value="ore">Ore</option>
-                    </select>
-                    <div>Number: ${number} (${numberProbabilities[number]}%)</div>
-                `;
-                grid.appendChild(hex);
+            const rows = [
+                [null, hexNumbers[0], hexNumbers[1], null],
+                [hexNumbers[2], hexNumbers[3], hexNumbers[4], hexNumbers[5]],
+                [hexNumbers[6], hexNumbers[7], hexNumbers[8], hexNumbers[9]],
+                [null, hexNumbers[10], hexNumbers[11], null]
+            ];
+
+            rows.forEach((row, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'hex-row';
+                row.forEach((number, colIndex) => {
+                    if (number === null) {
+                        const spacer = document.createElement('div');
+                        spacer.style.width = '100px';
+                        spacer.style.height = '115px';
+                        spacer.style.margin = '5px';
+                        rowDiv.appendChild(spacer);
+                    } else {
+                        const hex = document.createElement('div');
+                        hex.className = 'hex';
+                        hex.innerHTML = `
+                            <select class="resourceType">
+                                <option value="brick">Brick</option>
+                                <option value="lumber">Lumber</option>
+                                <option value="wool">Wool</option>
+                                <option value="grain">Grain</option>
+                                <option value="ore">Ore</option>
+                            </select>
+                            <div>Number: ${number} (${numberProbabilities[number]}%)</div>
+                        `;
+                        rowDiv.appendChild(hex);
+                    }
+                });
+                grid.appendChild(rowDiv);
             });
         }
 
