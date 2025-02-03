@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of Catan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0d9b5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-board {
+            width: 80%;
+            height: auto;
+        }
+
+        .hex-tile {
+            position: absolute;
+            transform-origin: center;
+        }
+
+        .frontier-card {
+            border-radius: 15px;
+            padding-left: 30px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Game of Catan</h2>
+    
+    <div id="game-board"></div>
+
+    <!-- Player controls -->
+    <div style="text-align: center; margin-top: 10px;">
+        <button onclick="newGame()">New Game</button>
+        
+        <p>Player Scores:</p>
+        <div id="score-container"></div>
+        
+        <button onclick="rollDice()">Roll Dice</button>
+    </div>
+
+    <!-- Player information -->
+    <div style="text-align: center; margin-top: 20px;">
+        <h3>Your Cards</h3>
+        <div id="player-cards" style="display: none;"></div>
+        
+        <h3>Available Tiles:</h3>
+        <div id="available-tiles"></div>
+    </div>
+
+    <!-- Trading screen -->
+    <button onclick="openTradingScreen()">Open Trading Screen</button>
+
+    <script>
+        let players = [];
+        const resources = ['Wheat', 'Sheep', 'Wood', 'Grain', 'Ore'];
+        
+        function createHexTile(resource, index) {
+            return document.createElement('div');
+            .classList.add('hex-tile')
+            .style.left += `${index * 30}px`;
+            .style.height = '75px';
+            const resourceElement = document.createElement('span');
+            if (resource === 'Wheat') resourceElement.textContent = ' grain';
+            else if (resource === 'Sheep') resourceElement.textContent = ' sheep';
+            else if (resource === 'Ore') resourceElement.textContent = '\u212B ore'; 
+            return [this, resourceElement];
+        }
+
+        function initializeBoard() {
+            const boardDiv = document.getElementById('game-board');
+            
+            // Create hex tiles
+            for(let i = 0; i < 6; ++i) {
+                for(let j = 0; j < 7; ++j) {
+                    if (isValid(i, j)) createHexTile(resources[Math.floor(Math.random() * resources.length)], 
+                      parseInt((i + Math.floor(j /2 ))/1.5));
+                }
+            }
+
+            // Update frontier cards
+            const hexTiles = document.querySelectorAll('.hex-tile');
+            for(let i = 0; i < hexTiles.length; ++i) {
+                if (isValid(Math.floor(hexTiles[i].getAttribute('left'))/30, 
+                          parseInt(hexTiles[i].getAttribute('left')/7.5))) {
+                    const cardContainer = document.createElement('div');
+                    .classList.add('frontier-card')
+                    .textContent = [resources[Math.floor(hexTiles[i]).getAttribute(' RegExp ') /18], // This part needs to be fixed
+                                  resources[Math.floor(hexTiles[i]).getAttribute('RegExp')/2]]
+                    // ... (rest of the code)
+                }
+            }
+
+            boardDiv.innerHTML += hexTile;
+        }
+
+        function isValid(i, j) {
+            return Math.abs(j - 2 * i %4 +1) <=3 && 
+                   ((i*6 +j)%7 < 5);
+        }
+
+        // Roll dice
+        function rollDice() {
+            const player = players[0];
+            if (player.riskPoints > 5 || !player.inTurn) return;
+            
+            const die1 = Math.floor(Math.random() *6)+1;
+            const die2 = Math.floor(Math.random() *6)+1;
+
+            alert(`You rolled: ${die1} and ${die2}`);
+            
+            // Add the dice to player's resources
+            player.resources[die1] += 1;
+            player.resources[die2] += 1;
+
+            if (resources.indexOf(resources[player.riskPoints]) !== -1) {
+                for(let i =0; i< die1; ++i)
+                    players[0].cards.push(resources[player.riskPoint][something])
+    }
+</script>
+</body>
+</html>
