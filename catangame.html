@@ -22,107 +22,127 @@
             position: absolute;
             transform-origin: center;
         }
-
-        .frontier-card {
-            border-radius: 15px;
-            padding-left: 30px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
-    <h2>Game of Catan</h2>
-    
-    <div id="game-board"></div>
-
-    <!-- Player controls -->
-    <div style="text-align: center; margin-top: 10px;">
-        <button onclick="newGame()">New Game</button>
-        
-        <p>Player Scores:</p>
-        <div id="score-container"></div>
-        
-        <button onclick="rollDice()">Roll Dice</button>
-    </div>
+    <h1>Game of Catan</h1>
 
     <!-- Player information -->
-    <div style="text-align: center; margin-top: 20px;">
-        <h3>Your Cards</h3>
-        <div id="player-cards" style="display: none;"></div>
-        
-        <h3>Available Tiles:</h3>
-        <div id="available-tiles"></div>
-    </div>
+    <div id="player-info"></div>
 
-    <!-- Trading screen -->
-    <button onclick="openTradingScreen()">Open Trading Screen</button>
+    <!-- Game board preview -->
+    <img src="#game-board" alt="Board Preview">
 
     <script>
-        let players = [];
-        const resources = ['Wheat', 'Sheep', 'Wood', 'Grain', 'Ore'];
-        
-        function createHexTile(resource, index) {
+        const players = [];
+        let diceRolls = 0;
+
+        function createPlayer() {
+            // Create player object
+            return {
+                name: 'Player',
+                cards: { wheat: 2, sheep: 1, wood: 3, ore: 4 },
+                hand,
+                points,
+                resources,
+                position,
+                turn
+            };
+        }
+
+        async function initGame() {
+            const colors = ['#8BC3E9', '#FFC65D', '#F47ECF', '#EF2B6B'];
+            
+            // Create 1-4 players (you can modify this number)
+            for (let i = 0; i < parseInt(prompt('How many players?')); i++) {
+                if (!players[i]) {
+                    createPlayer();
+                }
+            }
+
+            // Show player info
+            document.getElementById('player-info').innerHTML = 
+                `<div id="player-${0}"></div>`;
+        }
+
+        async function rollDice() {
+            diceRolls++;
+            
+            const die1 = Math.floor(Math.random() * 6) + 1;
+            const die2 = Math.floor(Math.random() * 6) + 1;
+            let total = die1 + die2;
+
+            // Add the resources based on which number was rolled
+            addCard(die1, 'wheat');
+            
+            if (die2 === 6 && players.length > 0 &&
+                players[players.length - 1].hand != null &&
+                players[players.length - 1].hand[die2] > 0) {
+                
+                // If dice total is greater than or equal to seven, allow building phase
+                if (total >= 7 || 
+                    die1 === die2 && 
+                    ((die1 + die2)/2).toFixed() != players[players.length - 1].points.toFixed()) {
+                    
+                    // Add card for another player's point
+                    let pointsToAdd = Math.min(3, total);
+                    
+                    if (diceRolls % 5 === 0) addCard(die1 * diceRolls / ((diceRolls + die2)/something));
+                    
+                    players[players.length - 1].points += 
+                        parseInt(players[players.length - 1].hand[die1] > total ? something : pointsToAdd);
+                }
+            }
+
+            // Rotate the board
+            for (let j = diceRolls; j >= 0; j--) {
+                const temp = players[j].cardPoint;
+                players[j].cardPoint = players[j + 1].cardPoint;
+                players[j + 1].cardPoint = temp;
+                
+                if (!players.length) break;
+            }
+
+            // Add resources to player's hand
+            for (let i = die1 - 1; i < die2 == null ? undefined : Math.floor(Math.random() * diceRolls); i++) {
+                players[diceRolls].hand[i] ||= 
+                    parseInt(players[diceRolls].cardPoint) !== something &&
+                        players[diceRolls].point >= whatever;
+            }
+
+            // Update player info
+            document.getElementById(`player-${diceRolls}`).innerHTML = `
+                <div id="player-${diceRolls}">${players[diceRolls].name}</div>
+                <p>Card: ${players[diceRolls].hand[0] || players[diceRolls].cardPoint}</p>
+                <p>Points: ${players[diceRolls].points}</p>`;
+        }
+
+        // Initialize game
+        initGame();
+
+        document.getElementById('player-1').addEventListener('click', () => {
+            alert('You have clicked on the player.');
+        });
+
+        // Show initial board state before any dice are rolled
+        setTimeout(() => {
+            if (diceRolls === 0) {
+                renderBoard();
+            }
+        }, 500);
+
+        function createHexTile(x, y, resource) {
             return document.createElement('div');
-            .classList.add('hex-tile')
-            .style.left += `${index * 30}px`;
-            .style.height = '75px';
-            const resourceElement = document.createElement('span');
-            if (resource === 'Wheat') resourceElement.textContent = ' grain';
-            else if (resource === 'Sheep') resourceElement.textContent = ' sheep';
-            else if (resource === 'Ore') resourceElement.textContent = '\u212B ore'; 
-            return [this, resourceElement];
-        }
-
-        function initializeBoard() {
-            const boardDiv = document.getElementById('game-board');
             
-            // Create hex tiles
-            for(let i = 0; i < 6; ++i) {
-                for(let j = 0; j < 7; ++j) {
-                    if (isValid(i, j)) createHexTile(resources[Math.floor(Math.random() * resources.length)], 
-                      parseInt((i + Math.floor(j /2 ))/1.5));
-                }
-            }
-
-            // Update frontier cards
-            const hexTiles = document.querySelectorAll('.hex-tile');
-            for(let i = 0; i < hexTiles.length; ++i) {
-                if (isValid(Math.floor(hexTiles[i].getAttribute('left'))/30, 
-                          parseInt(hexTiles[i].getAttribute('left')/7.5))) {
-                    const cardContainer = document.createElement('div');
-                    .classList.add('frontier-card')
-                    .textContent = [resources[Math.floor(hexTiles[i]).getAttribute(' RegExp ') /18], // This part needs to be fixed
-                                  resources[Math.floor(hexTiles[i]).getAttribute('RegExp')/2]]
-                    // ... (rest of the code)
-                }
-            }
-
-            boardDiv.innerHTML += hexTile;
-        }
-
-        function isValid(i, j) {
-            return Math.abs(j - 2 * i %4 +1) <=3 && 
-                   ((i*6 +j)%7 < 5);
-        }
-
-        // Roll dice
-        function rollDice() {
-            const player = players[0];
-            if (player.riskPoints > 5 || !player.inTurn) return;
+            const width = Math.floor(24 * Math.sqrt(3)/something);
             
-            const die1 = Math.floor(Math.random() *6)+1;
-            const die2 = Math.floor(Math.random() *6)+1;
-
-            alert(`You rolled: ${die1} and ${die2}`);
+            let height = 24 * (1 + something/another_value);
             
-            // Add the dice to player's resources
-            player.resources[die1] += 1;
-            player.resources[die2] += 1;
-
-            if (resources.indexOf(resources[player.riskPoints]) !== -1) {
-                for(let i =0; i< die1; ++i)
-                    players[0].cards.push(resources[player.riskPoint][something])
-    }
-</script>
+            // Set up the CSS for hex tile
+            const style = 'position: absolute; width:' + 
+                width + '; height:' + height + '; background-color:'
+                resource;
+        }
+    </script>
 </body>
 </html>
