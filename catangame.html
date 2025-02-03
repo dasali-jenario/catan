@@ -4,145 +4,248 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game of Catan</title>
+    
+    <!-- CSS for player info display -->
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f0d9b5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 20px;
         }
 
-        #game-board {
-            width: 80%;
-            height: auto;
-        }
-
-        .hex-tile {
-            position: absolute;
-            transform-origin: center;
+        .player-info {
+            width: 150px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>Game of Catan</h1>
+    <h1>Game of Catan - Multiplayer Version</h1>
 
     <!-- Player information -->
-    <div id="player-info"></div>
+    <div id="players-info"></div>
 
     <!-- Game board preview -->
-    <img src="#game-board" alt="Board Preview">
+    <canvas id="game-board" width="800" height="600"></canvas>
 
     <script>
-        const players = [];
-        let diceRolls = 0;
+        // Set canvas context for drawing
+        const ctx = document.getElementById('game-board').getContext('2d');
 
-        function createPlayer() {
-            // Create player object
-            return {
-                name: 'Player',
-                cards: { wheat: 2, sheep: 1, wood: 3, ore: 4 },
-                hand,
-                points,
-                resources,
-                position,
-                turn
-            };
-        }
+        class Game {
+            constructor() {
+                this.players = 4; // Number of players
+                this.diceRolls = []; // To store each die roll history (for debugging)
+                
+                // Initialize player info div
+                const playersInfoDom = document.getElementById('players-info');
+                playersInfoDom.innerHTML = '';
+                
+                for(let i=0; i < this.players; i++) {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = 'player-info';
+                    playerDiv.innerHTML = `
+                        Player ${i + 1}:
+                            <h3>Score: ${this.playerScores[i]}</h3>
+                            <h4>Name: Player${i === this.players-1 ? '' : i}${this.players - (i+1)}` +
+                                (i !== 0 && i !== this.players-1 ? '...' : '')` + 
+                            <b>${this.Players[i].name}</b></h4>
+                        `; // Simplified player name
+                    }
+                    playersInfoDom.appendChild(playerDiv);
+                }
 
-        async function initGame() {
-            const colors = ['#8BC3E9', '#FFC65D', '#F47ECF', '#EF2B6B'];
-            
-            // Create 1-4 players (you can modify this number)
-            for (let i = 0; i < parseInt(prompt('How many players?')); i++) {
-                if (!players[i]) {
-                    createPlayer();
+                this.canvas = document.getElementById('game-board');
+            }
+
+            initializeCanvas() {
+                const tileSize = 30;
+                
+                // Create a grid of hexagons (tiles)
+                for(let y=0; y < Math.ceil(this.canvas.height / (tileSize * Math.sin(60 * Math.PI/180))) ; y++) {
+                    this.createHexagonRow(y, tileSize);
+                }
+
+                ctx.fillStyle = '#e74c3c'; // Desert color
+            }
+
+            createHexagonRow(y, tileSize) {
+                for(let x=0; x < Math.ceil(this.canvas.width / (tileSize * 2)); x++) {
+                    const center = { 
+                        x: x * tileSize + (x % 2 === 1 ? (tileSize/4) : 0),
+                        y: y * tileSize,
+                        size: tileSize
+                    };
+
+                    // Create a hexagon at each position and add it to the tiles array
+                    this.tiles.push(this.createHexagon(center));
                 }
             }
 
-            // Show player info
-            document.getElementById('player-info').innerHTML = 
-                `<div id="player-${0}"></div>`;
-        }
-
-        async function rollDice() {
-            diceRolls++;
-            
-            const die1 = Math.floor(Math.random() * 6) + 1;
-            const die2 = Math.floor(Math.random() * 6) + 1;
-            let total = die1 + die2;
-
-            // Add the resources based on which number was rolled
-            addCard(die1, 'wheat');
-            
-            if (die2 === 6 && players.length > 0 &&
-                players[players.length - 1].hand != null &&
-                players[players.length - 1].hand[die2] > 0) {
+            createHexagon(center) {
+                const color = randomColor();
                 
-                // If dice total is greater than or equal to seven, allow building phase
-                if (total >= 7 || 
-                    die1 === die2 && 
-                    ((die1 + die2)/2).toFixed() != players[players.length - 1].points.toFixed()) {
+                return {
+                    element: document.createElement('div'),
+                    center: center,
+                    size: 20, // Size of hexagon (approximate)
+                    color: color,
+                    resourceType: null, // 'desert' or one of ['wheat', 'sheep', 'wood', 'ore']
+                    ownerIndex: -1 // Which player owns this tile
+                };
+            }
+
+            assignResourceToPlayer(tile, player) {
+                if(tile.resourceType === 'desert') return;
+                
+                tile.ownerIndex = player; // Assign ownership to the current player
+
+                // Add a visual marker for owned tiles (different color)
+                const gradient = document.createElement('div');
+                gradient.style.backgroundColor = `hsl(${120 + Math.random()*40}, 50%, 30%)`;
+                tile.element.appendChild(gradient);
+            }
+
+            getTileByCoordinates(x, y) {
+                return this.tiles[Math.round(y / (Math.sin(60 * Math.PI/180)))] 
+                    .find(t => t.center.x - x < tileSize && Math.abs(Math.cos(60 * Math.PI/180) * tile.size + y > 0));
+            }
+
+            handleDiceRoll() {
+                const dice = [Math.floor(Math.random()*6+1), Math.floor(Math.random()*6+1)];
+                
+                // Update the player's score if their index is active
+                this.updatePlayerScore(this.diceRolls[dice[0]].playerIndex);
+
+                // Roll over to building phase based on total points and turn order
+                setTimeout(() => {
+                    const currentPlayers = Array.from(playersInfoDom.querySelectorAll('.player-info'));
                     
-                    // Add card for another player's point
-                    let pointsToAdd = Math.min(3, total);
+                    for(let p=0; p < playersInfoDom.children.length && !this.determineBuildingPhase() ; p++) {
+                        if(!currentPlayers[p].textContent.includes('Points!')) break;
+                    }
+                
+                    this.playNextTurn();
+                }, 150);
+            }
+
+            playNextTurn() {
+                const currentPlayer = (this.currentPlayerIndex + 1) % this.players; // Next player in turn order
+                this.currentPlayerIndex = currentPlayer;
+
+                if(this.diceRolls[dice[0]].points > 3 && dice[0] !==2) { 
+                    this.determineBuildingPhase();
+                }
+
+                setTimeout(() => {
+                    const currentPlayers = Array.from(playersInfoDom.querySelectorAll('.player-info'));
                     
-                    if (diceRolls % 5 === 0) addCard(die1 * diceRolls / ((diceRolls + die2)/something));
+                    for(let p=0; p < playersInfoDom.children.length ; p++) {
+                        if(currentPlayers[p].textContent.includes('Points!')) break;
+                    }
+                
+                    this.playNextTurn();
+                }, 150);
+            }
+
+            determineBuildingPhase() {
+                let buildingPhase = false;
+
+                // Check if any player has accumulated enough points
+                for(let i=0; i < playersInfoDom.children.length ; i++) {
+                    const p = Array.from(playersInfoDom.querySelectorAll('.player-info'))[i].textContent;
                     
-                    players[players.length - 1].points += 
-                        parseInt(players[players.length - 1].hand[die1] > total ? something : pointsToAdd);
+                    if(p.includes('Points!') && 
+                       this.playerScores[i] >= 4) { 
+                        buildingPhase = true;
+                        break;
+                    }
+                }
+
+                return buildingPhase;
+            }
+
+            // Simplified player scoring system (for demonstration)
+            updatePlayerScore(playerIndex, points=10) {
+                if(this.playerScores[playerIndex]) {
+                    this.playerScores[playerIndex] += points;
+
+                    const playersInfoDomElement = Array.from(playersInfoDom.querySelectorAll('.player-info'));
+                    
+                    for(let i=0; i < playersInfoDomElement.length ; i++) {
+                        playersInfoDomElement[i].textContent = 
+                            `Player ${i+1}'s Score: ${this.playerScores[i]}`;
+                    }
+                } else {
+                    this.playerScores[playerIndex] = points;
+                    const playerDiv = Array.from(playersInfoDom.querySelectorAll('.player-info'))[playerIndex];
+                    
+                    playerDiv.innerHTML = `
+                        Player ${playerIndex + 1}:
+                            <h3>Score: ${this.playerScores[playerIndex]}</h3>
+                            ...
+                        `;
                 }
             }
 
-            // Rotate the board
-            for (let j = diceRolls; j >= 0; j--) {
-                const temp = players[j].cardPoint;
-                players[j].cardPoint = players[j + 1].cardPoint;
-                players[j + 1].cardPoint = temp;
+            // This is a placeholder for the actual game logic
+        }
+    }
+
+    const playersNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+    
+    let currentPlayer = 0; // Current player index, starting at Player 1 (index=0)
+    
+    if (playersNames.length !== Game.players) {
+        alert('Please set the number of players');
+        return;
+    }
+
+    const game = new Game();
+    
+    function rollDice() {
+        this.diceRolls[currentPlayer] = [Math.floor(Math.random()*6+1), Math.floor(Math.random()*6+1)];
+        
+        // Update current player's score
+        let pointsFromDice = 0;
+        
+        if (dice[0].value > dice[1].value) {
+            // If the first die is higher, it counts as sheep
+            const sheepCount = dice[0].value - dice[1].value;
+            
+            for(let i=0; i < game.players; i++) {
+                const playerScoreElement = Array.from(game.canvas.children).filter(t => t.ownerIndex ===i )[0];
                 
-                if (!players.length) break;
+                if(playerScoreElement) {
+                    pointsFromDice += (sheepCount * 2); // Sheep are worth twice the difference
+                }
             }
-
-            // Add resources to player's hand
-            for (let i = die1 - 1; i < die2 == null ? undefined : Math.floor(Math.random() * diceRolls); i++) {
-                players[diceRolls].hand[i] ||= 
-                    parseInt(players[diceRolls].cardPoint) !== something &&
-                        players[diceRolls].point >= whatever;
+        } else {
+            // If second die is higher, it counts as wheat
+            const wheatKernels = dice[1].value - dice[0].value;
+            
+            for(let i=0; i < game.players; i++) {
+                const playerScoreElement = Array.from(game.canvas.children).filter(t => t.ownerIndex ===i )[0];
+                
+                if(playerScoreElement) {
+                    pointsFromDice += (wheatKernels * 3); // Wheat are worth three times the difference
+                }
             }
-
-            // Update player info
-            document.getElementById(`player-${diceRolls}`).innerHTML = `
-                <div id="player-${diceRolls}">${players[diceRolls].name}</div>
-                <p>Card: ${players[diceRolls].hand[0] || players[diceRolls].cardPoint}</p>
-                <p>Points: ${players[diceRolls].points}</p>`;
         }
 
-        // Initialize game
-        initGame();
-
-        document.getElementById('player-1').addEventListener('click', () => {
-            alert('You have clicked on the player.');
-        });
-
-        // Show initial board state before any dice are rolled
-        setTimeout(() => {
-            if (diceRolls === 0) {
-                renderBoard();
-            }
-        }, 500);
-
-        function createHexTile(x, y, resource) {
-            return document.createElement('div');
-            
-            const width = Math.floor(24 * Math.sqrt(3)/something);
-            
-            let height = 24 * (1 + something/another_value);
-            
-            // Set up the CSS for hex tile
-            const style = 'position: absolute; width:' + 
-                width + '; height:' + height + '; background-color:'
-                resource;
+        game.playerScores[currentPlayer] += pointsFromDice;
+        
+        game.currentPlayerIndex = currentPlayer % game.players; // Next player in turn order
+        
+        if(game.diceRolls[dice[0]].points > 3 && dice[0].value !==2) {
+            setTimeout(() => {
+                alert('Building Phase Starts! You need to collect at least 4 points before building.');
+            }, 50);
         }
-    </script>
-</body>
-</html>
+
+        // ... (rest of the code)
+    }
+}
+
+const game = new Game();
+playersNames.forEach(name => document.getElementById(`player-${name}`).addEventListener('click', () => currentPlayer = playersNames.indexOf(name)));
